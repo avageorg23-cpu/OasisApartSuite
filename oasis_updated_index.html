@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Reservas - OASIS APART SUITE</title>
+
+  <!-- SDK oficial de PayPal para USD -->
+  <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    :root{
+      --pad: clamp(10px, 2.0vw, 18px);
+      --day: clamp(38px, 8.6vw, 46px);
+      --gap: clamp(7px, 1.4vw, 10px);
+    }
+    body{
+      margin:0;
+      padding:0;
+      font-family:'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+      background-image: url('https://imgur.com/prdV0Cl.png');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+
+      transition: background-image .5s ease-in-out;
+
+      color:#fff;
+      text-align:center;
+
+      min-height:100vh;
+      min-height:100svh;
+      min-height:100dvh;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      padding:
+        calc(var(--pad) + env(safe-area-inset-top))
+        var(--pad)
+        calc(var(--pad) + env(safe-area-inset-bottom))
+        var(--pad);
+    }
+
+    .container{
+      background-size:cover; background-position:center; background-repeat:no-repeat;
+      border: 1px solid rgba(255,255,255,0.22);
+      padding: 20px 18px 22px;
+      border-radius: 22px;
+      max-width: 680px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.40);
+      backdrop-filter: blur(3px);
+      position: relative;
+      overflow: hidden;
+
+      max-height: calc(100dvh - (var(--pad) * 2) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .container::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(1200px 400px at 50% 0%, rgba(255,255,255,0.14), transparent 60%);
+      pointer-events:none;
+    }
+
+    h2{
+      margin:0 0 8px;
+      font-size: clamp(1.35rem, 3.6vw, 1.75rem);
+      letter-spacing:.02em;
+      position:relative;
+    }
+
+    .subtitle{
+      margin:0 0 12px;
+      font-size: clamp(.90rem, 2.6vw, .95rem);
+      opacity:.92;
+      line-height:1.25;
+      position:relative;
+    }
+
+    .top-row{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 10px 0 6px;
+      position:relative;
+    }
+
+    select{
+      -webkit-appearance:none;
+      appearance:none;
+      padding: 11px 44px 11px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.28);
+      color:#fff;
+      font-size: clamp(.92rem, 2.5vw, .95rem);
+      font-weight:800;
+      min-width: min(200px, 92vw);
+      outline:none;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.22);
+      backdrop-filter: blur(4px);
+    }
+
+    .select-wrap{ position:relative; display:inline-block; }
+    .select-wrap:after{
+      content:"▾";
+      position:absolute;
+      right:14px;
+      top:50%;
+      transform:translateY(-50%);
+      color:rgba(255,255,255,0.85);
+      pointer-events:none;
+      font-size: 0.95rem;
+    }
+
+    .price-line{
+      margin: 8px 0 10px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      letter-spacing: .02em;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 8px 14px;
+      border-radius: 999px;
+      display: inline-block;
+      backdrop-filter: blur(4px);
+      position: relative;
+    }
+
+    .calendar-nav{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin-top: 10px;
+      position:relative;
+      flex-wrap: wrap;
+    }
+
+    button{
+      border:none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-family:inherit;
+      font-weight:900;
+      cursor:pointer;
+      color:#fff;
+      background: rgba(0, 51, 102, 0.92);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      transition: transform .08s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease;
+      white-space: nowrap;
+    }
+
+    button:hover:not(:disabled){
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.42);
+      background: rgba(0, 34, 68, 0.96);
+    }
+
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+
+    .month-wrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      margin: 16px 0 8px;
+      position:relative;
+    }
+
+    .month-year-title{
+      margin:0;
+      font-size: clamp(0.98rem, 2.9vw, 1.1rem);
+      text-transform:capitalize;
+      letter-spacing: .02em;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 8px 14px;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+      display:inline-flex;
+    }
+
+    table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: var(--gap);
+      background: rgba(255,255,255,0.90);
+      color:#000;
+      border-radius: 16px;
+      padding: clamp(9px, 1.9vw, 12px);
+      overflow:hidden;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+      position:relative;
+      margin-bottom: 15px;
+    }
+
+    th{
+      background: transparent;
+      color: rgba(0,0,0,0.55);
+      font-weight: 900;
+      border:none;
+      padding: 4px 0 0;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .10em;
+    }
+
+    td{ border:none; padding:0; }
+
+    td > .day{
+      width: var(--day);
+      height: var(--day);
+      margin: 0 auto;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      background: rgba(0,0,0,0.05);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+      transition: transform .08s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    td.available > .day{
+      background: rgba(200,247,197,0.95);
+      cursor:pointer;
+    }
+
+    td.unavailable > .day{
+      background: rgba(0,0,0,0.07);
+      color: rgba(0,0,0,0.35);
+      cursor:not-allowed;
+      box-shadow:none;
+      opacity: 0.75;
+    }
+
+    td.selected-day > .day{
+      background: rgba(10, 90, 170, 0.18) !important;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.18);
+    }
+
+    td.checkin > .day,
+    td.checkout > .day{
+      background: #003366 !important;
+      color:#fff !important;
+      box-shadow: 0 16px 34px rgba(0,0,0,0.24);
+      transform: translateY(-1px);
+    }
+
+    .legend{
+      margin-top: 10px;
+      font-size: 0.76rem;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      position:relative;
+    }
+
+    .legend span{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      background: rgba(0,0,0,0.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(2px);
+    }
+
+    .legend-dot{
+      width:10px; height:10px; border-radius:50%;
+      display:inline-block;
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    .legend-dot.available-dot{ background:#c8f7c5; border-color: rgba(0,0,0,0.12); }
+    .legend-dot.unavailable-dot{ background:#f0f0f0; border-color: rgba(0,0,0,0.12); }
+    .legend-dot.selected-dot{ background:#003366; }
+    .legend-dot.range-dot{ background: rgba(10, 90, 170, 0.18); border-color: rgba(0,0,0,0.12); }
+
+    .payment-info{
+      background: rgba(255,255,255,0.96);
+      color:#000;
+      padding: 14px 14px 16px;
+      border-radius: 16px;
+      margin-top: 14px;
+      text-align:left;
+      font-size: .92rem;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+      position:relative;
+    }
+
+    .payment-info h4{ margin:0 0 8px; font-size:1rem; }
+    .payment-info p{ margin:6px 0; }
+
+    .user-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .user-form input {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.2);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    #pay-btn{
+      display:block;
+      width:100%;
+      margin-top: 10px;
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 12px 14px;
+      border-radius: 999px;
+      text-align:center;
+      color:#fff;
+      background: rgba(0, 51, 102, 0.92);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      text-decoration:none;
+      transition: transform .08s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    #pay-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.42);
+      background: rgba(0, 34, 68, 0.96);
+    }
+
+    #pay-btn.disabled{
+      opacity:.55;
+      pointer-events:none;
+      box-shadow:none;
+    }
+
+    #paypal-button-container { margin-top: 12px; }
+
+    .after-pay-note{
+      margin-top: 10px;
+      font-size: .78rem;
+      color: rgba(0,0,0,0.60);
+      line-height: 1.25;
+    }
+
+    @media (max-width: 420px){
+      .container{ padding: 16px 12px 18px; border-radius: 20px; }
+      button{ padding: 9px 12px; font-size: .90rem; }
+      .month-year-title{ padding: 7px 12px; }
+      th{ font-size: .68rem; }
+      :root{ --day: 36px; --gap: 7px; }
+      .legend{ display:none; }
+      .price-line{ font-size: .92rem; padding: 7px 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Reservá tu Suite en OASIS</h2>
+    <p class="subtitle">Elegí tu suite, moneda y seleccioná las fechas de ingreso y salida</p>
+
+    <div class="top-row">
+      <span class="select-wrap">
+        <select id="bungalow">
+          <option value="Apart 1">Apart 1</option>
+          <option value="Apart 2">Apart 2</option>
+        </select>
+      </span>
+
+      <!-- Selector de pasajeros (opcional/adaptable) -->
+      <span class="select-wrap" id="wrap-pasajeros" style="display: none;">
+        <select id="pasajeros">
+          <option value="2">2 Personas</option>
+        </select>
+      </span>
+
+      <span class="select-wrap">
+        <select id="moneda">
+          <option value="ARS">Pesos ARS (Seña)</option>
+          <option value="USD">Dólares USD (Total)</option>
+        </select>
+      </span>
+    </div>
+
+    <div id="price-line" class="price-line">Calculando...</div>
+
+    <div class="calendar-nav">
+      <button type="button" onclick="changeMonth(-1)">Mes anterior</button>
+      <button type="button" onclick="changeMonth(1)">Mes siguiente</button>
+    </div>
+
+    <!-- CONTENEDOR DONDE SE RENDERIZAN LOS 2 MESES (MECÁNICA PORTILLO) -->
+    <div id="calendar-container"></div>
+
+    <div class="legend">
+      <span><span class="legend-dot available-dot"></span> Disponible</span>
+      <span><span class="legend-dot unavailable-dot"></span> Ocupado / pasada</span>
+      <span><span class="legend-dot selected-dot"></span> Check-in / Check-out</span>
+      <span><span class="legend-dot range-dot"></span> Noches</span>
+    </div>
+
+    <div class="payment-info" id="payment-section" style="display:none;">
+      <h4>Resumen de Reserva</h4>
+      <p id="nights-info"></p>
+      <p id="amount-info"></p>
+
+      <div id="user-data-form" class="user-form" style="display: none;">
+        <input type="text" id="cli-nombre" placeholder="Nombre" required>
+        <input type="text" id="cli-apellido" placeholder="Apellido" required>
+        <input type="tel" id="cli-contacto" placeholder="WhatsApp / Teléfono" required>
+      </div>
+
+      <div id="paypal-button-container" style="display:none;"></div>
+      <button id="pay-btn" type="button" class="disabled">Completar datos para reservar</button>
+
+      <div class="after-pay-note">
+        Tus fechas se pre-reservarán al hacer clic. Serás redirigido a la pasarela para abonar. El saldo restante se abona directamente en el hospedaje.
+      </div>
+    </div>
+  </div>
+
+<script>
+  // =========================
+  // CONFIG OASIS APART SUITE
+  // =========================
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKoc2bSM3OnTKQpEYzUIU6ffNeiggEeaH_3UGiU4rDMy9zY_RDiktScv9ZEcSZswcgIg/exec";
+  const TIPO_CAMBIO_USD = 1000; 
+
+  const preciosFallback = {
+    "Apart 1": { 2: 150000 },
+    "Apart 2": { 2: 150000 }
+  };
+
+  let preciosDinámicos = JSON.parse(JSON.stringify(preciosFallback));
+
+  const BG = {
+    "default": "https://imgur.com/prdV0Cl.png",
+    "Apart 1": "https://imgur.com/prdV0Cl.png",
+    "Apart 2": "https://imgur.com/prdV0Cl.png"
+  };
+
+  let currentDate = new Date();
+  const occupiedCache = new Map();
+  let selection = { checkin: null, checkout: null, nights: 0 };
+  let paypalInitialized = false;
+
+  function fmtARS(n){
+    return new Intl.NumberFormat("es-AR", {
+      style:"currency",
+      currency:"ARS",
+      maximumFractionDigits:0
+    }).format(n);
+  }
+
+  function obtenerPrecioBase() {
+    const room = document.getElementById("bungalow").value;
+    const pax = Number(document.getElementById("pasajeros").value) || 2;
+    if (!preciosDinámicos[room]) return 150000;
+    return preciosDinámicos[room][pax] || preciosDinámicos[room][2] || 150000;
+  }
+
+  function updatePriceLine(){
+    const room = document.getElementById("bungalow").value;
+    const moneda = document.getElementById("moneda").value;
+    const precioArs = obtenerPrecioBase();
+    const el = document.getElementById("price-line");
+
+    if (el) {
+      if (moneda === "ARS") {
+        el.textContent = `${room} · ${fmtARS(precioArs)} por noche`;
+      } else {
+        const precioUsd = (precioArs / TIPO_CAMBIO_USD).toFixed(0);
+        el.textContent = `${room} · $${precioUsd} USD por noche`;
+      }
+    }
+    updateSummary();
+  }
+
+  async function cargarPreciosDesdeSheet() {
+    try {
+      const response = await fetch(`${APPS_SCRIPT_URL}?action=getPrecios&t=${Date.now()}`);
+      const data = await response.json();
+      if (data && Object.keys(data).length > 0) {
+        preciosDinámicos = data;
+        updatePriceLine();
+      }
+    } catch (e) {
+      console.warn("Usando precios de respaldo.", e);
+      updatePriceLine();
+    }
+  }
+
+  function updateBackground(){
+    const room = document.getElementById("bungalow").value;
+    const url = BG[room] || BG["default"];
+    document.querySelector(".container").style.backgroundImage =
+      `linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.55)),url(${url})`;
+  }
+
+  function toISO(dateObj){
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth()+1).padStart(2,"0");
+    const d = String(dateObj.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function fmtISO(iso){
+    if(!iso) return "";
+    const [y,m,d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  function isoToDate(iso){
+    const [y,m,d] = iso.split("-");
+    return new Date(Number(y), Number(m)-1, Number(d));
+  }
+
+  function diffNights(checkinISO, checkoutISO){
+    return Math.round((isoToDate(checkoutISO) - isoToDate(checkinISO)) / (1000*60*60*24));
+  }
+
+  function enumerateNights(checkinISO, checkoutISO){
+    const out = [];
+    const cur = new Date(isoToDate(checkinISO));
+    const end = isoToDate(checkoutISO);
+    while(cur < end){
+      out.push(toISO(cur));
+      cur.setDate(cur.getDate()+1);
+    }
+    return out;
+  }
+
+  function clearCalendarHighlights(){
+    document.querySelectorAll("td.selected-day, td.checkin, td.checkout")
+      .forEach(td => td.classList.remove("selected-day","checkin","checkout"));
+  }
+
+  function highlightRange(checkinISO, checkoutISO){
+    if (!checkinISO || !checkoutISO) return;
+    enumerateNights(checkinISO, checkoutISO).forEach(iso => {
+      const td = document.querySelector(`td[data-fecha="${iso}"]`);
+      if (td) td.classList.add("selected-day");
+    });
+  }
+
+  function applySelectionHighlights() {
+    clearCalendarHighlights();
+    if (selection.checkin) {
+      const checkinTd = document.querySelector(`td[data-fecha="${selection.checkin}"]`);
+      if (checkinTd) checkinTd.classList.add("checkin");
+    }
+    if (selection.checkout) {
+      highlightRange(selection.checkin, selection.checkout);
+      const checkoutTd = document.querySelector(`td[data-fecha="${selection.checkout}"]`);
+      if (checkoutTd) checkoutTd.classList.add("checkout");
+    }
+  }
+
+  async function loadOccupiedForRoom(room, forceRefresh = false){
+    if (!forceRefresh && occupiedCache.has(room)) {
+      return occupiedCache.get(room);
+    }
+    try {
+      const r = await fetch(`${APPS_SCRIPT_URL}?action=getDispo&room=${encodeURIComponent(room)}&t=${Date.now()}`, { cache: "no-store" });
+      const rows = await r.json();
+      const occupied = new Set();
+      // rows ahora es un array plano de fechas ISO ["2026-11-01", ...]
+      if (Array.isArray(rows)) {
+        rows.forEach(iso => occupied.add(String(iso).trim()));
+      }
+      occupiedCache.set(room, occupied);
+      return occupied;
+    } catch (e) {
+      console.warn("Error cargando disponibilidad:", e);
+      return new Set();
+    }
+  }
+
+  function generarTablaMes(dateObj, occupied) {
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const monthWrap = document.createElement("div");
+    monthWrap.className = "month-wrap";
+    monthWrap.innerHTML = `<h3 class="month-year-title">${dateObj.toLocaleString("es-ES", { month: "long", year: "numeric" })}</h3>`;
+
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead>
+        <tr><th>Dom</th><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th></tr>
+      </thead>
+    `;
+    
+    const tbody = document.createElement("tbody");
+    let row = document.createElement("tr");
+
+    for (let i = 0; i < firstDay; i++) row.appendChild(document.createElement("td"));
+
+    const today = new Date();
+    const today0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const td = document.createElement("td");
+      td.innerHTML = `<div class="day">${day}</div>`;
+      const iso = toISO(date);
+      td.dataset.fecha = iso;
+
+      if (date < today0) {
+        td.className = "unavailable";
+      } else if (occupied.has(iso)){
+        td.className = "unavailable";
+      } else {
+        td.className = "available";
+        td.onclick = () => onDayClick(iso);
+      }
+      row.appendChild(td);
+      if (date.getDay() === 6){ tbody.appendChild(row); row = document.createElement("tr"); }
+    }
+    if (row.children.length > 0) tbody.appendChild(row);
+    table.appendChild(tbody);
+
+    const block = document.createElement("div");
+    block.appendChild(monthWrap);
+    block.appendChild(table);
+    return block;
+  }
+
+  async function loadAvailabilityData(){
+    const room = document.getElementById("bungalow").value;
+    const container = document.getElementById("calendar-container");
+    container.innerHTML = "";
+    
+    let occupied = occupiedCache.get(room) || new Set();
+
+    const mes1Block = generarTablaMes(currentDate, occupied);
+    container.appendChild(mes1Block);
+
+    const nextDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    const mes2Block = generarTablaMes(nextDate, occupied);
+    container.appendChild(mes2Block);
+
+    applySelectionHighlights();
+    updatePriceLine();
+
+    loadOccupiedForRoom(room, true).then(freshOccupied => {
+      freshOccupied.forEach(iso => {
+        document.querySelectorAll(`td[data-fecha="${iso}"]`).forEach(td => {
+          if (!td.classList.contains("checkin") && !td.classList.contains("checkout")) {
+            td.className = "unavailable";
+            td.onclick = null;
+          }
+        });
+      });
+    });
+  }
+
+  function changeMonth(offset){
+    currentDate.setMonth(currentDate.getMonth() + offset);
+    loadAvailabilityData();
+  }
+
+  function onDayClick(isoDate){
+    const room = document.getElementById("bungalow").value;
+    const occupied = occupiedCache.get(room) || new Set();
+
+    if (!selection.checkin || selection.checkout){
+      selection.checkin = isoDate;
+      selection.checkout = null;
+      applySelectionHighlights();
+      updateSummary();
+      return;
+    }
+
+    if (isoDate <= selection.checkin){
+      selection.checkin = isoDate;
+      selection.checkout = null;
+      applySelectionHighlights();
+      updateSummary();
+      return;
+    }
+
+    if (enumerateNights(selection.checkin, isoDate).some(n => occupied.has(n))){
+      alert("Hay una noche ocupada en el rango seleccionado.");
+      return;
+    }
+
+    selection.checkout = isoDate;
+    selection.nights = diffNights(selection.checkin, selection.checkout);
+    applySelectionHighlights();
+    updateSummary();
+  }
+
+  function updateSummary(){
+    const { checkin, checkout, nights } = selection;
+    const room = document.getElementById("bungalow").value;
+    const moneda = document.getElementById("moneda").value;
+    
+    if (!checkin) { document.getElementById("payment-section").style.display = "none"; return; }
+    document.getElementById("payment-section").style.display = "block";
+
+    const userForm = document.getElementById("user-data-form");
+    const payBtn = document.getElementById("pay-btn");
+    const paypalContainer = document.getElementById("paypal-button-container");
+
+    if (!checkout){
+      document.getElementById("nights-info").textContent = `${room} · Ingreso: ${fmtISO(checkin)}`;
+      document.getElementById("amount-info").textContent = `Elegí la fecha de salida.`;
+      userForm.style.display = "none";
+      payBtn.style.display = "block";
+      payBtn.classList.add("disabled");
+      payBtn.textContent = "Completar datos";
+      paypalContainer.style.display = "none";
+      return;
+    }
+
+    document.getElementById("nights-info").textContent = `${room} · ${nights} noches (${fmtISO(checkin)} al ${fmtISO(checkout)})`;
+    userForm.style.display = "flex";
+
+    const precioBase = obtenerPrecioBase();
+    
+    if (moneda === "ARS") {
+      const montoTotal = nights * precioBase;
+      const sena = montoTotal * 0.30; // Seña 30% o total según preferencia
+      document.getElementById("amount-info").innerHTML = `
+        Precio por noche: ${fmtARS(precioBase)}<br>
+        <strong>Total (${nights} noches): ${fmtARS(montoTotal)}</strong><br>
+        <strong>Abonás ahora (Seña): ${fmtARS(sena)}</strong><br>
+        Saldo en el hospedaje: ${fmtARS(montoTotal - sena)}
+      `;
+      payBtn.style.display = "block";
+      payBtn.classList.remove("disabled");
+      payBtn.textContent = "Pagar Seña con Mercado Pago (ARS)";
+      payBtn.onclick = () => procesarPagoARS(sena);
+      paypalContainer.style.display = "none";
+    } else {
+      const precioBaseUSD = parseFloat((precioBase / TIPO_CAMBIO_USD).toFixed(2));
+      const montoTotal = nights * precioBaseUSD;
+      document.getElementById("amount-info").textContent = `Total estimado (USD): $${montoTotal.toFixed(2)} USD`;
+      payBtn.style.display = "none";
+      paypalContainer.style.display = "block";
+
+      if (!paypalInitialized && window.paypal) {
+        paypalInitialized = true;
+        paypal.Buttons({
+          createOrder: function(data, actions) {
+            const nombre = document.getElementById("cli-nombre").value.trim();
+            const apellido = document.getElementById("cli-apellido").value.trim();
+            const contacto = document.getElementById("cli-contacto").value.trim();
+            if (!nombre || !apellido || !contacto) {
+              alert("Por favor completá tu nombre, apellido y WhatsApp antes de pagar.");
+              throw new Error("Datos incompletos");
+            }
+            const currentNights = selection.nights;
+            const currentTotal = currentNights * parseFloat((obtenerPrecioBase() / TIPO_CAMBIO_USD).toFixed(2));
+
+            return actions.order.create({
+              purchase_units: [{
+                description: `Reserva de ${currentNights} noches en ${room}`,
+                amount: { value: currentTotal.toFixed(2) }
+              }]
+            });
+          },
+          onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+              const currentTotal = selection.nights * parseFloat((obtenerPrecioBase() / TIPO_CAMBIO_USD).toFixed(2));
+              enviarReservaAlServidor("USD", currentTotal);
+            });
+          }
+        }).render('#paypal-button-container');
+      }
+    }
+  }
+
+  async function procesarPagoARS(montoSeña) {
+    const nombre = document.getElementById("cli-nombre").value.trim();
+    const apellido = document.getElementById("cli-apellido").value.trim();
+    const contacto = document.getElementById("cli-contacto").value.trim();
+    const payBtn = document.getElementById("pay-btn");
+
+    if (!nombre || !apellido || !contacto) {
+      payBtn.textContent = "¡Completá tus datos para continuar!";
+      payBtn.style.background = "#b32a2a";
+      setTimeout(() => {
+        payBtn.textContent = "Pagar Seña con Mercado Pago (ARS)";
+        payBtn.style.background = "rgba(0, 51, 102, 0.92)";
+      }, 3000);
+      return;
+    }
+
+    payBtn.textContent = "Generando pago automatizado...";
+    payBtn.classList.add("disabled");
+
+    const room = document.getElementById("bungalow").value;
+    const payload = {
+      accessToken: "TEST-787adfe5-ad4f-430a-b12b-fcfc40847bc5",
+      bungalow: room,
+      checkin: selection.checkin,
+      checkout: selection.checkout,
+      nombre: nombre,
+      apellido: apellido,
+      contacto: contacto,
+      moneda: "ARS",
+      noches: selection.nights,
+      montoTotal: montoSeña
+    };
+
+    try {
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      });
+      
+      const result = await response.json();
+
+      if (result.status === "success" && result.init_point) {
+        window.location.href = result.init_point;
+      } else {
+        console.error("Detalle del error:", result.message);
+        payBtn.textContent = result.message ? result.message : "Error en pasarela";
+        payBtn.style.background = "#b32a2a";
+      }
+    } catch (e) {
+      console.error("Error:", e);
+      payBtn.textContent = "Error de conexión con el servidor";
+      payBtn.style.background = "#b32a2a";
+    }
+  }
+
+  async function enviarReservaAlServidor(moneda, montoTotal) {
+    const nombre = document.getElementById("cli-nombre").value.trim();
+    const apellido = document.getElementById("cli-apellido").value.trim();
+    const contacto = document.getElementById("cli-contacto").value.trim();
+    const room = document.getElementById("bungalow").value;
+
+    const payload = {
+      accessToken: "TEST-787adfe5-ad4f-430a-b12b-fcfc40847bc5",
+      bungalow: room,
+      checkin: selection.checkin,
+      checkout: selection.checkout,
+      nombre: nombre,
+      apellido: apellido,
+      contacto: contacto,
+      moneda: moneda,
+      noches: selection.nights,
+      montoTotal: montoTotal
+    };
+
+    try {
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      });
+      
+      const result = await response.json();
+      if (result.status === "success") {
+        alert("¡Pago exitoso y reserva registrada con éxito!");
+        location.reload();
+      }
+    } catch (e) {
+      console.error("Error:", e);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get("status");
+    const ref = urlParams.get("ref");
+
+    if (status === "success") {
+      alert("¡Pago aprobado con éxito! Tu seña ha sido registrada correctamente. Referencia: " + (ref || "N/A"));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    updateBackground();
+    cargarPreciosDesdeSheet();
+
+    const bungalowSelect = document.getElementById("bungalow");
+    bungalowSelect.addEventListener("change", () => {
+      selection = { checkin: null, checkout: null, nights: 0 };
+      document.getElementById("payment-section").style.display = "none";
+      updateBackground();
+      loadAvailabilityData();
+      loadOccupiedForRoom(bungalowSelect.value, true);
+    });
+
+    document.getElementById("moneda").addEventListener("change", updatePriceLine);
+    
+    loadOccupiedForRoom(bungalowSelect.value).then(() => {
+      loadAvailabilityData();
+    });
+  });
+</script>
+</body>
+</html>
